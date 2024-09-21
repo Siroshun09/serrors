@@ -8,4 +8,3 @@ jobs:
     uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
     with:
       upload-results: true
-      enable-cache: false
