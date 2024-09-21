@@ -1,0 +1,8 @@
+name: Go Build
+on: [ push, pull_request ]
+
+jobs:
+  test:
+    uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
+    with:
+      upload-results: true
