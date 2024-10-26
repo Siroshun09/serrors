@@ -66,12 +66,28 @@ func GetStackTrace(err error) StackTrace {
 		return nil
 	}
 
-	serr := getStackTraceError(err)
-	if serr != nil {
-		return serr.stackTrace
+	stackTrace, ok := GetAttachedStackTrace(err)
+	if ok {
+		return stackTrace
 	}
 
 	return newStackTraceFromCallers(1) // GetStackTrace
+}
+
+// GetAttachedStackTrace returns StackTrace when the given error has it.
+//
+// The returning bool value indicates that the given error has StackTrace.
+func GetAttachedStackTrace(err error) (StackTrace, bool) {
+	if err == nil {
+		return nil, false
+	}
+
+	serr := getStackTraceError(err)
+	if serr != nil {
+		return serr.stackTrace, true
+	}
+
+	return nil, false
 }
 
 func getStackTraceError(err error) *stackTraceError {

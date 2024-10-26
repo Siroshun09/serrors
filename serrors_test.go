@@ -171,6 +171,53 @@ func TestGetStackTrace(t *testing.T) {
 	}
 }
 
+func TestGetAttachedStackTrace(t *testing.T) {
+	stackTrace := StackTrace{}
+	tests := []struct {
+		name        string
+		err         error
+		want        StackTrace
+		wantCreated bool
+	}{
+		{
+			name: "expect nil and false (err is nil)",
+			err:  nil,
+			want: nil,
+		},
+		{
+			name: "expect stackTrace and true",
+			err:  &stackTraceError{err: errors.New("test"), stackTrace: stackTrace},
+			want: stackTrace,
+		},
+		{
+			name: "expect stackTrace (wrapped) and true",
+			err:  fmt.Errorf("%w", &stackTraceError{err: errors.New("test"), stackTrace: stackTrace}),
+			want: stackTrace,
+		},
+		{
+			name:        "expect nil and false (err is not stackTraceError)",
+			err:         errors.New("test"),
+			wantCreated: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := GetAttachedStackTrace(tt.err)
+
+			var fail bool
+			if tt.want == nil {
+				fail = ok || got != nil
+			} else {
+				fail = !ok || !reflect.DeepEqual(got, tt.want)
+			}
+
+			if fail {
+				t.Errorf("GetAttachedStackTrace() = (%v, %v), want (%v, %v)", got, ok, tt.want, tt.want != nil)
+			}
+		})
+	}
+}
+
 func TestFuncInfo_String(t *testing.T) {
 
 	tests := []struct {
