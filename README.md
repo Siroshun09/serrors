@@ -17,6 +17,7 @@ A Go library to create errors with stack traces.
 ### Getting StackTrace attached to errors
 
 - `serrors.GetStackTrace(err)`
+- `serrors.GetAttachedStackTrace(err)` 
 
 ## License
 
