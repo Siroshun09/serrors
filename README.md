@@ -4,7 +4,13 @@ A Go library to create errors with stack traces.
 
 ## Requirements
 
-- Go 1.23.1+
+- Go 1.22.0+
+
+## Installation
+
+```shell
+go get github.com/Siroshun09/serrors
+```
 
 ## Usage
 
