@@ -8,3 +8,8 @@ jobs:
     uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
     with:
       upload-results: true
+  test-1_23:
+    uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
+    with:
+      upload-results: true
+      go-version: 1.23
