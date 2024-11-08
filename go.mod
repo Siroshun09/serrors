@@ -1,3 +1,3 @@
 module github.com/Siroshun09/serrors
 
-go 1.23.1
+go 1.22
