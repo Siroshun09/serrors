@@ -21,17 +21,17 @@ func (e *stackTraceError) Unwrap() error {
 	return e.err
 }
 
-// New creates an error that has StackTrace.
+// New creates an error with a StackTrace.
 func New(msg string) error {
 	return withStackTrace(errors.New(msg))
 }
 
-// Errorf creates an error that has StackTrace.
+// Errorf creates an error with a StackTrace.
 func Errorf(format string, args ...any) error {
 	return withStackTrace(fmt.Errorf(format, args...))
 }
 
-// WithStackTrace creates an error that has StackTrace.
+// WithStackTrace creates an error with a StackTrace.
 //
 // If err already has a StackTrace, this function returns err as-is.
 //
@@ -56,9 +56,9 @@ func withStackTrace(err error) error {
 	}
 }
 
-// GetStackTrace returns StackTrace from err.
+// GetStackTrace returns a StackTrace for err.
 //
-// If err does not have StackTrace, this function creates current StackTrace.
+// If err does not have a StackTrace, this function creates the current StackTrace.
 //
 // Also, if err is nil, this function returns nil.
 func GetStackTrace(err error) StackTrace {
@@ -74,9 +74,9 @@ func GetStackTrace(err error) StackTrace {
 	return newStackTraceFromCallers(1) // GetStackTrace
 }
 
-// GetAttachedStackTrace returns StackTrace when the given error has it.
+// GetAttachedStackTrace returns the StackTrace if the given error has one.
 //
-// The returning bool value indicates that the given error has StackTrace.
+// The returned bool indicates whether the given error has a StackTrace.
 func GetAttachedStackTrace(err error) (StackTrace, bool) {
 	if err == nil {
 		return nil, false
@@ -103,13 +103,13 @@ func getStackTraceError(err error) *stackTraceError {
 	return serr
 }
 
-// FuncInfo has values that are obtained from runtime.Func.
+// FuncInfo contains values obtained from runtime.Func.
 type FuncInfo struct {
-	// Name is a name of the function
+	// Name is the name of the function.
 	Name string
-	// File is a filename of the function.
+	// File is the source file where the function is defined.
 	File string
-	// Line is a line number of the function.
+	// Line is the line number in that file.
 	Line int
 }
 
@@ -118,7 +118,7 @@ func (s FuncInfo) String() string {
 	return s.Name + " (" + s.File + ":" + strconv.Itoa(s.Line) + ")"
 }
 
-// StackTrace is a array of FuncInfo.
+// StackTrace is an array of FuncInfo.
 type StackTrace []FuncInfo
 
 // String formats StackTrace using FuncInfo.String.
