@@ -90,6 +90,11 @@ func GetAttachedStackTrace(err error) (StackTrace, bool) {
 	return nil, false
 }
 
+// GetCurrentStackTrace returns the current StackTrace.
+func GetCurrentStackTrace() StackTrace {
+	return newStackTraceFromCallers(1)
+}
+
 func getStackTraceError(err error) *stackTraceError {
 	if err == nil {
 		return nil

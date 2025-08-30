@@ -218,6 +218,14 @@ func TestGetAttachedStackTrace(t *testing.T) {
 	}
 }
 
+func TestGetCurrentStackTrace(t *testing.T) {
+	stackTrace := GetCurrentStackTrace()
+	if len(stackTrace) == 0 {
+		t.Errorf("GetCurrentStackTrace() = %v, want not empty", stackTrace)
+		return
+	}
+}
+
 func TestFuncInfo_String(t *testing.T) {
 
 	tests := []struct {

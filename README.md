@@ -27,7 +27,7 @@ go get github.com/Siroshun09/serrors
   - If `err` is `nil`, it returns `nil`.
   - If `err` already has a stack trace from this package, it returns `err` as-is.
 
-### Getting stack traces from errors
+### Getting stack traces
 
 - `serrors.GetStackTrace(err)` returns a stack trace for `err`.
   - If `err` already has a stack trace attached (created by this package), it returns that.
@@ -35,6 +35,7 @@ go get github.com/Siroshun09/serrors
   - If `err` is `nil`, it returns `nil`.
 - `serrors.GetAttachedStackTrace(err)` returns the attached stack trace and a bool.
   - The bool indicates whether `err` had an attached stack trace.
+- `serrors.GetCurrentStackTrace()` returns the current StackTrace. 
 
 ### Example
 
