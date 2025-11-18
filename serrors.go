@@ -47,7 +47,7 @@ func withStackTrace(err error) error {
 
 	serr := getStackTraceError(err)
 	if serr != nil {
-		return serr
+		return err
 	}
 
 	return &stackTraceError{
