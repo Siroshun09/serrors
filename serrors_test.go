@@ -84,6 +84,16 @@ func Test_getStackTraceError(t *testing.T) {
 			wantSame: true,
 		},
 		{
+			name:        "get wrapped (WithStackTrace with wrapped)",
+			err:         WithStackTrace(wrapped),
+			wantWrapped: true,
+		},
+		{
+			name:        "get wrapped (WithStackTrace with fmt.Errorf with wrapped)",
+			err:         WithStackTrace(fmt.Errorf("%w", wrapped)),
+			wantWrapped: true,
+		},
+		{
 			name:        "get wrapped (New)",
 			err:         fmt.Errorf("%w", wrapped),
 			wantWrapped: true,
@@ -121,7 +131,6 @@ func Test_getStackTraceError(t *testing.T) {
 				if got != nil {
 					t.Errorf("getStackTraceError() = %v, want %v", got, nil)
 				}
-
 			default:
 				t.Errorf("invalid test case")
 			}
