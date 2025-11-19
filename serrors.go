@@ -3,6 +3,7 @@ package serrors
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"runtime"
 	"strconv"
 	"strings"
@@ -164,5 +165,45 @@ func newFuncInfo(pc uintptr, f *runtime.Func) FuncInfo {
 			File: file,
 			Line: line,
 		}
+	}
+}
+
+// GetStackTraces returns a sequence of errors and their associated StackTrace.
+//
+// This function recursively returns errors and stack traces by repeating the following process:
+//
+// 1. If the given error has a StackTrace itself, this function returns the wrapped error and its StackTrace
+//   - In this case, the iterator returns only one error.
+//
+// 2. If the given error has an Unwrap() error function, this function calls it and tries to process step 1 again
+// 3. If the given error has an Unwrap() []error function, this function calls it and tries to process step 1 for each error in the returned slice
+func GetStackTraces(err error) iter.Seq2[error, StackTrace] {
+	return func(yield func(error, StackTrace) bool) {
+		tryYieldStackTrace(err, yield)
+	}
+}
+
+func tryYieldStackTrace(err error, yield func(error, StackTrace) bool) bool {
+	switch x := err.(type) {
+	case *stackTraceError:
+		return yield(x.err, x.stackTrace)
+	case interface{ Unwrap() error }:
+		err = x.Unwrap()
+		if err == nil {
+			return true
+		}
+		return tryYieldStackTrace(err, yield)
+	case interface{ Unwrap() []error }:
+		for _, err := range x.Unwrap() {
+			if err == nil {
+				continue
+			}
+			if !tryYieldStackTrace(err, yield) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
 	}
 }

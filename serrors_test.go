@@ -352,3 +352,175 @@ func Test_newFuncInfo(t *testing.T) {
 		})
 	}
 }
+
+type multipleErrorsWrapper struct {
+	errs []error // possibly contains nil
+}
+
+func (w *multipleErrorsWrapper) Error() string {
+	return "multiple errors"
+}
+
+func (w *multipleErrorsWrapper) Unwrap() []error {
+	return w.errs
+}
+
+func TestGetStackTraces(t *testing.T) {
+	serr1 := New("test1")
+	serr2 := New("test2")
+	serr3 := New("test3")
+
+	tests := []struct {
+		name            string
+		err             error
+		wantErrs        []error
+		wantStackTraces []StackTrace
+	}{
+		{
+			name:            "nil",
+			err:             nil,
+			wantErrs:        nil,
+			wantStackTraces: nil,
+		},
+		{
+			name:            "does not have stack trace for single error",
+			err:             errors.New("test"),
+			wantErrs:        nil,
+			wantStackTraces: nil,
+		},
+		{
+			name:            "does not have stack trace for multiple errors",
+			err:             fmt.Errorf("%w", fmt.Errorf("%w", errors.New("test"))),
+			wantErrs:        nil,
+			wantStackTraces: nil,
+		},
+		{
+			name:            "wrap nil error",
+			err:             fmt.Errorf("%w", error(nil)),
+			wantErrs:        []error{},
+			wantStackTraces: []StackTrace{},
+		},
+		{
+			name:            "single stack trace",
+			err:             serr1,
+			wantErrs:        []error{errors.New(serr1.Error())},
+			wantStackTraces: []StackTrace{GetStackTrace(serr1)},
+		},
+		{
+			name: "multiple stack traces",
+			err:  errors.Join(serr1, serr2, serr3),
+			wantErrs: []error{
+				errors.New(serr1.Error()),
+				errors.New(serr2.Error()),
+				errors.New(serr3.Error()),
+			},
+			wantStackTraces: []StackTrace{
+				GetStackTrace(serr1),
+				GetStackTrace(serr2),
+				GetStackTrace(serr3),
+			},
+		},
+		{
+			name: "wrap joined errors by WithStackTrace",
+			err:  WithStackTrace(errors.Join(serr1, serr2, serr3)),
+			wantErrs: []error{
+				errors.New(serr1.Error()),
+				errors.New(serr2.Error()),
+				errors.New(serr3.Error()),
+			},
+			wantStackTraces: []StackTrace{
+				GetStackTrace(serr1),
+				GetStackTrace(serr2),
+				GetStackTrace(serr3),
+			},
+		},
+		{
+			name: "wrap joined errors by fmt.Errorf",
+			err:  fmt.Errorf("%w", errors.Join(serr1, serr2, serr3)),
+			wantErrs: []error{
+				errors.New(serr1.Error()),
+				errors.New(serr2.Error()),
+				errors.New(serr3.Error()),
+			},
+			wantStackTraces: []StackTrace{
+				GetStackTrace(serr1),
+				GetStackTrace(serr2),
+				GetStackTrace(serr3),
+			},
+		},
+		{
+			name: "1 error does not have stack trace",
+			err:  errors.Join(serr1, errors.New("test2"), serr3),
+			wantErrs: []error{
+				errors.New(serr1.Error()),
+				errors.New(serr3.Error()),
+			},
+			wantStackTraces: []StackTrace{
+				GetStackTrace(serr1),
+				GetStackTrace(serr3),
+			},
+		},
+		{
+			name: "contains nil error in multiple errors",
+			err:  &multipleErrorsWrapper{errs: []error{serr1, nil, serr3}},
+			wantErrs: []error{
+				errors.New(serr1.Error()),
+				errors.New(serr3.Error()),
+			},
+			wantStackTraces: []StackTrace{
+				GetStackTrace(serr1),
+				GetStackTrace(serr3),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if len(tt.wantErrs) != len(tt.wantStackTraces) {
+				t.Fatalf("want length of wantErrs and wantStackTraces is not equal")
+			}
+
+			idx := -1
+			for err, stackTrace := range GetStackTraces(tt.err) {
+				idx++
+				if len(tt.wantErrs) <= idx || len(tt.wantStackTraces) <= idx {
+					t.Fatalf("unexpected error %d: %v", idx, err)
+				}
+
+				if !reflect.DeepEqual(err, tt.wantErrs[idx]) {
+					t.Errorf("error at index %d mismatch: got %v, want %v", idx, err, tt.wantErrs[idx])
+				}
+
+				if !reflect.DeepEqual(stackTrace, tt.wantStackTraces[idx]) {
+					t.Errorf("unexpected stack trace %d: %v", idx, stackTrace)
+				}
+			}
+
+			switch {
+			case idx == -1 && 0 < len(tt.wantErrs):
+				t.Errorf("no errors returned")
+			case idx != -1 && idx < len(tt.wantErrs)-1:
+				t.Errorf("some errors returned: %v", tt.wantErrs[idx:])
+			}
+		})
+	}
+
+	t.Run("break iterator", func(t *testing.T) {
+		err := errors.Join(serr1, serr2, serr3)
+		idx := -1
+
+		for err, stackTrace := range GetStackTraces(err) {
+			idx++
+			if idx == 0 {
+				if !reflect.DeepEqual(err, errors.New(serr1.Error())) {
+					t.Errorf("unexpected error %d: %v", idx, err)
+				}
+				if !reflect.DeepEqual(stackTrace, GetStackTrace(serr1)) {
+					t.Errorf("unexpected stack trace %d: %v", idx, stackTrace)
+				}
+			} else {
+				t.Errorf("unexpected iteration %d: %v", idx, err)
+			}
+			break
+		}
+	})
+}
