@@ -61,39 +61,43 @@ func (l logger) Info(ctx context.Context, msg string) {
 func (l logger) Warn(ctx context.Context, err error) {
 	l.dedicated.Warn(ctx, err)
 	if l.opt.PrintStackTraceOnWarn {
-		l.printStackTrace(ctx, err)
+		l.printStackTraces(ctx, err)
 	}
 }
 
 func (l logger) Warnf(ctx context.Context, format string, args ...any) {
 	l.dedicated.Warnf(ctx, format, args...)
 	if l.opt.PrintStackTraceOnWarn {
-		l.printStackTrace(ctx, nil)
+		l.printStackTraces(ctx, nil)
 	}
 }
 
 func (l logger) Error(ctx context.Context, err error) {
 	l.dedicated.Error(ctx, err)
-	l.printStackTrace(ctx, err)
+	l.printStackTraces(ctx, err)
 }
 
 func (l logger) Errorf(ctx context.Context, format string, args ...any) {
 	l.dedicated.Errorf(ctx, format, args...)
-	l.printStackTrace(ctx, nil)
+	l.printStackTraces(ctx, nil)
 }
 
 const stackTraceLogFormat = "stacktrace\n%s"
 
-func (l logger) printStackTrace(ctx context.Context, err error) {
-	stackTrace, exists := serrors.GetAttachedStackTrace(err)
-	if !exists {
-		if l.opt.PrintCurrentStackTraceIfNotAttached {
-			stackTrace = serrors.GetCurrentStackTrace()
-		} else {
-			return
-		}
+func (l logger) printStackTraces(ctx context.Context, err error) {
+	found := false
+	for _, stackTrace := range serrors.GetStackTraces(err) {
+		l.printStackTrace(ctx, stackTrace)
+		found = true
 	}
 
+	if !found && l.opt.PrintCurrentStackTraceIfNotAttached {
+		l.printStackTrace(ctx, serrors.GetCurrentStackTrace())
+		return
+	}
+}
+
+func (l logger) printStackTrace(ctx context.Context, stackTrace serrors.StackTrace) {
 	switch l.opt.StackTraceLogLevel {
 	case StackTraceLogLevelDebug:
 		l.dedicated.Debug(ctx, fmt.Sprintf(stackTraceLogFormat, stackTrace))

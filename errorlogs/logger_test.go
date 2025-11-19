@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/Siroshun09/logs"
@@ -187,6 +188,29 @@ func TestLogger_Warn(t *testing.T) {
 			l.Warn(ctx, tt.err)
 		})
 	}
+
+	for _, printStackTraceOnWarn := range []bool{true, false} {
+		t.Run("multiple stacktraces / PrintStackTraceOnWarn = "+strconv.FormatBool(printStackTraceOnWarn), func(t *testing.T) {
+			serr1 := serrors.New("test1")
+			serr2 := serrors.New("test2")
+			serr3 := serrors.New("test3")
+			err := errors.Join(serr1, serr2, serr3)
+
+			ctx := t.Context()
+			mockLogger := logmock.NewMockLogger(gomock.NewController(t))
+
+			mockLogger.EXPECT().Warn(ctx, err)
+			if printStackTraceOnWarn {
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr1)))
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr2)))
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr3)))
+			}
+
+			l := logger{dedicated: mockLogger, opt: LoggerOption{PrintStackTraceOnWarn: printStackTraceOnWarn}}
+			l.Warn(ctx, err)
+		})
+	}
+
 }
 
 func TestLogger_Warnf(t *testing.T) {
@@ -302,6 +326,24 @@ func TestLogger_Error(t *testing.T) {
 			l.Error(ctx, tt.err)
 		})
 	}
+
+	t.Run("multiple stacktraces", func(t *testing.T) {
+		serr1 := serrors.New("test1")
+		serr2 := serrors.New("test2")
+		serr3 := serrors.New("test3")
+		err := errors.Join(serr1, serr2, serr3)
+
+		ctx := t.Context()
+		mockLogger := logmock.NewMockLogger(gomock.NewController(t))
+
+		mockLogger.EXPECT().Error(ctx, err)
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr1)))
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr2)))
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr3)))
+
+		l := logger{dedicated: mockLogger, opt: LoggerOption{}}
+		l.Error(ctx, err)
+	})
 }
 
 func TestLogger_Errorf(t *testing.T) {
@@ -436,7 +478,7 @@ func TestLogger_printStackTrace(t *testing.T) {
 			tt.expect(ctx, tt.err, mockLogger)
 
 			l := logger{dedicated: mockLogger, opt: tt.opt}
-			l.printStackTrace(ctx, tt.err)
+			l.printStackTraces(ctx, tt.err)
 		})
 	}
 }
