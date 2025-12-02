@@ -1,4 +1,4 @@
-package errorlogs
+package errorlogs_test
 
 import (
 	"context"
@@ -11,28 +11,28 @@ import (
 	"github.com/Siroshun09/logs"
 	"github.com/Siroshun09/logs/logmock"
 	"github.com/Siroshun09/serrors"
+	"github.com/Siroshun09/serrors/errorlogs"
 	"go.uber.org/mock/gomock"
 )
 
 func TestNewLogger(t *testing.T) {
 	dedicated := logs.NewStdoutLogger(true)
-	expect := logger{dedicated: dedicated}
-	actual := NewLogger(dedicated)
-	if !reflect.DeepEqual(expect, actual) {
-		t.Errorf("expect: %+v, actual: %+v", expect, actual)
+	actual := errorlogs.NewLogger(dedicated)
+	if !errorlogs.IsLoggerDedicatedBy(dedicated, actual) {
+		t.Errorf("expect: %+v, actual: %+v", dedicated, actual)
 	}
 }
 
 func TestLogger_Debug(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		msg    string
 		expect func(ctx context.Context, mock *logmock.MockLogger)
 	}{
 		{
 			name: "empty msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			msg:  "",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
 				mock.EXPECT().Debug(ctx, "")
@@ -40,7 +40,7 @@ func TestLogger_Debug(t *testing.T) {
 		},
 		{
 			name: "not empty msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			msg:  "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
 				mock.EXPECT().Debug(ctx, "test")
@@ -54,7 +54,7 @@ func TestLogger_Debug(t *testing.T) {
 
 			tt.expect(ctx, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Debug(ctx, tt.msg)
 		})
 	}
@@ -63,13 +63,13 @@ func TestLogger_Debug(t *testing.T) {
 func TestLogger_Info(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		msg    string
 		expect func(ctx context.Context, mock *logmock.MockLogger)
 	}{
 		{
 			name: "empty msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			msg:  "",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
 				mock.EXPECT().Info(ctx, "")
@@ -77,7 +77,7 @@ func TestLogger_Info(t *testing.T) {
 		},
 		{
 			name: "not empty msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			msg:  "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
 				mock.EXPECT().Info(ctx, "test")
@@ -91,7 +91,7 @@ func TestLogger_Info(t *testing.T) {
 
 			tt.expect(ctx, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Info(ctx, tt.msg)
 		})
 	}
@@ -100,13 +100,13 @@ func TestLogger_Info(t *testing.T) {
 func TestLogger_Warn(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		err    error
 		expect func(ctx context.Context, err error, mock *logmock.MockLogger)
 	}{
 		{
 			name: "empty error msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  errors.New(""),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Warn(ctx, errors.New(""))
@@ -114,7 +114,7 @@ func TestLogger_Warn(t *testing.T) {
 		},
 		{
 			name: "not empty error msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  errors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Warn(ctx, errors.New("test"))
@@ -122,18 +122,18 @@ func TestLogger_Warn(t *testing.T) {
 		},
 		{
 			name: "stacktrace attached / PrintStackTraceOnWarn = true",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintStackTraceOnWarn: true,
 			},
 			err: serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Warn(ctx, err)
-				mock.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(err)))
+				mock.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err)))
 			},
 		},
 		{
 			name: "stacktrace attached / PrintStackTraceOnWarn = false",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintStackTraceOnWarn: false,
 			},
 			err: serrors.New("test"),
@@ -143,7 +143,7 @@ func TestLogger_Warn(t *testing.T) {
 		},
 		{
 			name: "stacktrace not attached / PrintStackTraceOnWarn = true / PrintCurrentStackTraceIfNotAttached = true",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintStackTraceOnWarn:               true,
 				PrintCurrentStackTraceIfNotAttached: true,
 			},
@@ -156,7 +156,7 @@ func TestLogger_Warn(t *testing.T) {
 		},
 		{
 			name: "stacktrace not attached / PrintStackTraceOnWarn = false / PrintCurrentStackTraceIfNotAttached = true",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintStackTraceOnWarn:               false,
 				PrintCurrentStackTraceIfNotAttached: true,
 			},
@@ -167,7 +167,7 @@ func TestLogger_Warn(t *testing.T) {
 		},
 		{
 			name: "stacktrace not attached / PrintStackTraceOnWarn = true / PrintCurrentStackTraceIfNotAttached = false",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintStackTraceOnWarn:               true,
 				PrintCurrentStackTraceIfNotAttached: false,
 			},
@@ -184,7 +184,7 @@ func TestLogger_Warn(t *testing.T) {
 
 			tt.expect(ctx, tt.err, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Warn(ctx, tt.err)
 		})
 	}
@@ -201,12 +201,12 @@ func TestLogger_Warn(t *testing.T) {
 
 			mockLogger.EXPECT().Warn(ctx, err)
 			if printStackTraceOnWarn {
-				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr1)))
-				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr2)))
-				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr3)))
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr1)))
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr2)))
+				mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr3)))
 			}
 
-			l := logger{dedicated: mockLogger, opt: LoggerOption{PrintStackTraceOnWarn: printStackTraceOnWarn}}
+			l := errorlogs.NewLoggerWithOption(mockLogger, errorlogs.LoggerOption{PrintStackTraceOnWarn: printStackTraceOnWarn})
 			l.Warn(ctx, err)
 		})
 	}
@@ -216,14 +216,14 @@ func TestLogger_Warn(t *testing.T) {
 func TestLogger_Warnf(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		format string
 		arg    any
 		expect func(ctx context.Context, mock *logmock.MockLogger)
 	}{
 		{
 			name:   "empty msg",
-			opt:    LoggerOption{},
+			opt:    errorlogs.LoggerOption{},
 			format: "%s",
 			arg:    "",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -232,7 +232,7 @@ func TestLogger_Warnf(t *testing.T) {
 		},
 		{
 			name:   "not empty msg",
-			opt:    LoggerOption{},
+			opt:    errorlogs.LoggerOption{},
 			format: "%s",
 			arg:    "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -241,7 +241,7 @@ func TestLogger_Warnf(t *testing.T) {
 		},
 		{
 			name:   "print current stacktrace / PrintStackTraceOnWarn = true / PrintCurrentStackTraceIfNotAttached = true",
-			opt:    LoggerOption{PrintStackTraceOnWarn: true, PrintCurrentStackTraceIfNotAttached: true},
+			opt:    errorlogs.LoggerOption{PrintStackTraceOnWarn: true, PrintCurrentStackTraceIfNotAttached: true},
 			format: "%s",
 			arg:    "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -258,7 +258,7 @@ func TestLogger_Warnf(t *testing.T) {
 
 			tt.expect(ctx, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Warnf(ctx, tt.format, tt.arg)
 		})
 	}
@@ -267,13 +267,13 @@ func TestLogger_Warnf(t *testing.T) {
 func TestLogger_Error(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		err    error
 		expect func(ctx context.Context, err error, mock *logmock.MockLogger)
 	}{
 		{
 			name: "empty error msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  errors.New(""),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Error(ctx, errors.New(""))
@@ -281,7 +281,7 @@ func TestLogger_Error(t *testing.T) {
 		},
 		{
 			name: "not empty error msg",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  errors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Error(ctx, errors.New("test"))
@@ -289,16 +289,16 @@ func TestLogger_Error(t *testing.T) {
 		},
 		{
 			name: "stacktrace attached",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Error(ctx, err)
-				mock.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(err)))
+				mock.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err)))
 			},
 		},
 		{
 			name: "stacktrace not attached / PrintCurrentStackTraceIfNotAttached = true",
-			opt:  LoggerOption{PrintCurrentStackTraceIfNotAttached: true},
+			opt:  errorlogs.LoggerOption{PrintCurrentStackTraceIfNotAttached: true},
 			err:  errors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Error(ctx, err)
@@ -308,7 +308,7 @@ func TestLogger_Error(t *testing.T) {
 		},
 		{
 			name: "stacktrace not attached / PrintCurrentStackTraceIfNotAttached = false",
-			opt:  LoggerOption{PrintCurrentStackTraceIfNotAttached: false},
+			opt:  errorlogs.LoggerOption{PrintCurrentStackTraceIfNotAttached: false},
 			err:  errors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				mock.EXPECT().Error(ctx, err)
@@ -322,7 +322,7 @@ func TestLogger_Error(t *testing.T) {
 
 			tt.expect(ctx, tt.err, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Error(ctx, tt.err)
 		})
 	}
@@ -337,11 +337,11 @@ func TestLogger_Error(t *testing.T) {
 		mockLogger := logmock.NewMockLogger(gomock.NewController(t))
 
 		mockLogger.EXPECT().Error(ctx, err)
-		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr1)))
-		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr2)))
-		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(serr3)))
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr1)))
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr2)))
+		mockLogger.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(serr3)))
 
-		l := logger{dedicated: mockLogger, opt: LoggerOption{}}
+		l := errorlogs.NewLoggerWithOption(mockLogger, errorlogs.LoggerOption{})
 		l.Error(ctx, err)
 	})
 }
@@ -349,14 +349,14 @@ func TestLogger_Error(t *testing.T) {
 func TestLogger_Errorf(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		format string
 		arg    any
 		expect func(ctx context.Context, mock *logmock.MockLogger)
 	}{
 		{
 			name:   "empty msg",
-			opt:    LoggerOption{},
+			opt:    errorlogs.LoggerOption{},
 			format: "%s",
 			arg:    "",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -365,7 +365,7 @@ func TestLogger_Errorf(t *testing.T) {
 		},
 		{
 			name:   "not empty msg",
-			opt:    LoggerOption{},
+			opt:    errorlogs.LoggerOption{},
 			format: "%s",
 			arg:    "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -374,7 +374,7 @@ func TestLogger_Errorf(t *testing.T) {
 		},
 		{
 			name:   "print current stacktrace / PrintCurrentStackTraceIfNotAttached = true",
-			opt:    LoggerOption{PrintCurrentStackTraceIfNotAttached: true},
+			opt:    errorlogs.LoggerOption{PrintCurrentStackTraceIfNotAttached: true},
 			format: "%s",
 			arg:    "test",
 			expect: func(ctx context.Context, mock *logmock.MockLogger) {
@@ -391,7 +391,7 @@ func TestLogger_Errorf(t *testing.T) {
 
 			tt.expect(ctx, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
 			l.Errorf(ctx, tt.format, tt.arg)
 		})
 	}
@@ -400,13 +400,13 @@ func TestLogger_Errorf(t *testing.T) {
 func TestLogger_printStackTrace(t *testing.T) {
 	tests := []struct {
 		name   string
-		opt    LoggerOption
+		opt    errorlogs.LoggerOption
 		err    error
 		expect func(ctx context.Context, err error, mock *logmock.MockLogger)
 	}{
 		{
 			name: "nil",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  nil,
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				// expect nothing to be called
@@ -414,15 +414,15 @@ func TestLogger_printStackTrace(t *testing.T) {
 		},
 		{
 			name: "stacktrace attached error",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
-				mock.EXPECT().Debug(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(err)))
+				mock.EXPECT().Debug(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err)))
 			},
 		},
 		{
 			name: "stacktrace not attached error",
-			opt:  LoggerOption{},
+			opt:  errorlogs.LoggerOption{},
 			err:  errors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
 				// expect nothing to be called
@@ -430,7 +430,7 @@ func TestLogger_printStackTrace(t *testing.T) {
 		},
 		{
 			name: "stacktrace not attached error / PrintCurrentStackTraceIfNotAttached = true",
-			opt: LoggerOption{
+			opt: errorlogs.LoggerOption{
 				PrintCurrentStackTraceIfNotAttached: true,
 			},
 			err: errors.New("test"),
@@ -441,32 +441,32 @@ func TestLogger_printStackTrace(t *testing.T) {
 		},
 		{
 			name: "stacktrace attached error / log level: info",
-			opt: LoggerOption{
-				StackTraceLogLevel: StackTraceLogLevelInfo,
+			opt: errorlogs.LoggerOption{
+				StackTraceLogLevel: errorlogs.StackTraceLogLevelInfo,
 			},
 			err: serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
-				mock.EXPECT().Info(ctx, fmt.Sprintf(stackTraceLogFormat, serrors.GetStackTrace(err)))
+				mock.EXPECT().Info(ctx, fmt.Sprintf(errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err)))
 			},
 		},
 		{
 			name: "stacktrace attached error / log level: warn",
-			opt: LoggerOption{
-				StackTraceLogLevel: StackTraceLogLevelWarn,
+			opt: errorlogs.LoggerOption{
+				StackTraceLogLevel: errorlogs.StackTraceLogLevelWarn,
 			},
 			err: serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
-				mock.EXPECT().Warnf(ctx, stackTraceLogFormat, serrors.GetStackTrace(err))
+				mock.EXPECT().Warnf(ctx, errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err))
 			},
 		},
 		{
 			name: "stacktrace attached error / log level: error",
-			opt: LoggerOption{
-				StackTraceLogLevel: StackTraceLogLevelError,
+			opt: errorlogs.LoggerOption{
+				StackTraceLogLevel: errorlogs.StackTraceLogLevelError,
 			},
 			err: serrors.New("test"),
 			expect: func(ctx context.Context, err error, mock *logmock.MockLogger) {
-				mock.EXPECT().Errorf(ctx, stackTraceLogFormat, serrors.GetStackTrace(err))
+				mock.EXPECT().Errorf(ctx, errorlogs.GetStackTraceLogFormat(), serrors.GetStackTrace(err))
 			},
 		},
 	}
@@ -477,8 +477,8 @@ func TestLogger_printStackTrace(t *testing.T) {
 
 			tt.expect(ctx, tt.err, mockLogger)
 
-			l := logger{dedicated: mockLogger, opt: tt.opt}
-			l.printStackTraces(ctx, tt.err)
+			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
+			errorlogs.CallPrintStackTrace(ctx, tt.err, l)
 		})
 	}
 }
