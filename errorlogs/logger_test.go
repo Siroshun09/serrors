@@ -21,6 +21,35 @@ func TestNewLogger(t *testing.T) {
 	if !errorlogs.IsLoggerDedicatedBy(dedicated, actual) {
 		t.Errorf("expect: %+v, actual: %+v", dedicated, actual)
 	}
+
+	expectedLoggerOption := errorlogs.LoggerOption{}
+	actualLoggerOption := errorlogs.GetLoggerOption(actual)
+	if !reflect.DeepEqual(expectedLoggerOption, actualLoggerOption) {
+		t.Errorf("expect: %+v, actual: %+v", expectedLoggerOption, actualLoggerOption)
+	}
+
+	byWithOption := errorlogs.NewLoggerWithOption(dedicated, expectedLoggerOption)
+	if !reflect.DeepEqual(byWithOption, actual) {
+		t.Errorf("expect: %+v, actual: %+v", byWithOption, actual)
+	}
+}
+
+func TestNewLoggerWithOption(t *testing.T) {
+	dedicated := logs.NewStdoutLogger(true)
+	option := errorlogs.LoggerOption{
+		StackTraceLogLevel:                  errorlogs.StackTraceLogLevelInfo,
+		PrintStackTraceOnWarn:               true,
+		PrintCurrentStackTraceIfNotAttached: true,
+	}
+	actual := errorlogs.NewLoggerWithOption(dedicated, option)
+	if !errorlogs.IsLoggerDedicatedBy(dedicated, actual) {
+		t.Errorf("expect: %+v, actual: %+v", dedicated, actual)
+	}
+
+	actualLoggerOption := errorlogs.GetLoggerOption(actual)
+	if !reflect.DeepEqual(option, actualLoggerOption) {
+		t.Errorf("expect: %+v, actual: %+v", option, actualLoggerOption)
+	}
 }
 
 func TestLogger_Debug(t *testing.T) {

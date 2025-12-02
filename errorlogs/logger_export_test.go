@@ -12,6 +12,10 @@ func IsLoggerDedicatedBy(expect logs.Logger, actual logs.Logger) bool {
 	return reflect.DeepEqual(expect, castLogger(actual).dedicated)
 }
 
+func GetLoggerOption(actual logs.Logger) LoggerOption {
+	return castLogger(actual).opt
+}
+
 func CallPrintStackTraces(ctx context.Context, err error, target logs.Logger) {
 	castLogger(target).printStackTraces(ctx, err)
 }
