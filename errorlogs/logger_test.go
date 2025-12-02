@@ -478,7 +478,22 @@ func TestLogger_printStackTrace(t *testing.T) {
 			tt.expect(ctx, tt.err, mockLogger)
 
 			l := errorlogs.NewLoggerWithOption(mockLogger, tt.opt)
-			errorlogs.CallPrintStackTrace(ctx, tt.err, l)
+			errorlogs.CallPrintStackTraces(ctx, tt.err, l)
 		})
 	}
+}
+
+func TestLogger_Nil(t *testing.T) {
+	l := errorlogs.NewNilLogger()
+
+	// should not panic on any method call
+	ctx := t.Context()
+	l.Debug(ctx, "test")
+	l.Info(ctx, "test")
+	l.Warn(ctx, serrors.New("test"))
+	l.Warnf(ctx, "test %s", "arg")
+	l.Error(ctx, errors.New("test"))
+	l.Errorf(ctx, "test %s", "arg")
+	errorlogs.CallPrintStackTraces(ctx, errors.New("test"), l)
+	errorlogs.CallPrintStackTrace(ctx, l)
 }

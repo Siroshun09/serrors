@@ -15,7 +15,7 @@ func NewLogger(out logs.Logger) logs.Logger {
 
 // NewLoggerWithOption creates a new logs.Logger with the given option.
 func NewLoggerWithOption(out logs.Logger, opt LoggerOption) logs.Logger {
-	return logger{
+	return &logger{
 		dedicated: out,
 		opt:       opt,
 	}
@@ -50,41 +50,69 @@ type logger struct {
 	opt       LoggerOption
 }
 
-func (l logger) Debug(ctx context.Context, msg string) {
+func (l *logger) Debug(ctx context.Context, msg string) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Debug(ctx, msg)
 }
 
-func (l logger) Info(ctx context.Context, msg string) {
+func (l *logger) Info(ctx context.Context, msg string) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Info(ctx, msg)
 }
 
-func (l logger) Warn(ctx context.Context, err error) {
+func (l *logger) Warn(ctx context.Context, err error) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Warn(ctx, err)
 	if l.opt.PrintStackTraceOnWarn {
 		l.printStackTraces(ctx, err)
 	}
 }
 
-func (l logger) Warnf(ctx context.Context, format string, args ...any) {
+func (l *logger) Warnf(ctx context.Context, format string, args ...any) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Warnf(ctx, format, args...)
 	if l.opt.PrintStackTraceOnWarn {
 		l.printStackTraces(ctx, nil)
 	}
 }
 
-func (l logger) Error(ctx context.Context, err error) {
+func (l *logger) Error(ctx context.Context, err error) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Error(ctx, err)
 	l.printStackTraces(ctx, err)
 }
 
-func (l logger) Errorf(ctx context.Context, format string, args ...any) {
+func (l *logger) Errorf(ctx context.Context, format string, args ...any) {
+	if l == nil {
+		return
+	}
+
 	l.dedicated.Errorf(ctx, format, args...)
 	l.printStackTraces(ctx, nil)
 }
 
 const stackTraceLogFormat = "stacktrace\n%s"
 
-func (l logger) printStackTraces(ctx context.Context, err error) {
+func (l *logger) printStackTraces(ctx context.Context, err error) {
+	if l == nil {
+		return
+	}
+
 	found := false
 	for _, stackTrace := range serrors.GetStackTraces(err) {
 		l.printStackTrace(ctx, stackTrace)
@@ -97,7 +125,11 @@ func (l logger) printStackTraces(ctx context.Context, err error) {
 	}
 }
 
-func (l logger) printStackTrace(ctx context.Context, stackTrace serrors.StackTrace) {
+func (l *logger) printStackTrace(ctx context.Context, stackTrace serrors.StackTrace) {
+	if l == nil {
+		return
+	}
+
 	switch l.opt.StackTraceLogLevel {
 	case StackTraceLogLevelDebug:
 		l.dedicated.Debug(ctx, fmt.Sprintf(stackTraceLogFormat, stackTrace))
