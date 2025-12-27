@@ -139,33 +139,25 @@ func (s StackTrace) String() string {
 	return builder.String()
 }
 
-var unknownFuncInfo = FuncInfo{
-	Name: "UNKNOWN",
-}
-
 func newStackTraceFromCallers(skip int) StackTrace {
 	pcs := make([]uintptr, 64)
 	l := runtime.Callers(skip+2, pcs) // callers -> newStackTraceFromCallers
+	frames := runtime.CallersFrames(pcs[:l])
+	st := make(StackTrace, 0, l)
 
-	stacks := make(StackTrace, l)
-	for i, pc := range pcs[:l] {
-		stacks[i] = newFuncInfo(pc, runtime.FuncForPC(pc))
-	}
-
-	return stacks
-}
-
-func newFuncInfo(pc uintptr, f *runtime.Func) FuncInfo {
-	if f == nil {
-		return unknownFuncInfo
-	} else {
-		file, line := f.FileLine(pc)
-		return FuncInfo{
-			Name: f.Name(),
-			File: file,
-			Line: line,
+	for {
+		frame, more := frames.Next()
+		st = append(st, FuncInfo{
+			Name: frame.Function,
+			File: frame.File,
+			Line: frame.Line,
+		})
+		if !more {
+			break
 		}
 	}
+
+	return st
 }
 
 // GetStackTraces returns a sequence of errors and their associated StackTrace.

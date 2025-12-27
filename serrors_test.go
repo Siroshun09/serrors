@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"runtime"
 	"testing"
 )
 
@@ -304,50 +303,6 @@ func TestStackTrace_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.stackTrace.String(); got != tt.want {
 				t.Errorf("String() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_newFuncInfo(t *testing.T) {
-	pc, _, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatalf("runtime error, can't get caller")
-	}
-	f := runtime.FuncForPC(pc)
-	if f == nil {
-		t.Fatalf("runtime error, can't get Func")
-	}
-	tests := []struct {
-		name        string
-		pc          uintptr
-		f           *runtime.Func
-		wantUnknown bool
-	}{
-		{
-			name:        "get unknown",
-			pc:          0,
-			f:           nil,
-			wantUnknown: true,
-		},
-		{
-			name:        "get actual",
-			pc:          pc,
-			f:           f,
-			wantUnknown: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := newFuncInfo(tt.pc, tt.f)
-			if tt.wantUnknown {
-				if got != unknownFuncInfo {
-					t.Errorf("newFuncInfo() = %v, want %v", got, unknownFuncInfo)
-				}
-			} else {
-				if got == unknownFuncInfo {
-					t.Errorf("newFuncInfo() = %v, want actual func info", unknownFuncInfo)
-				}
 			}
 		})
 	}
