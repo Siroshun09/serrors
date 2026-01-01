@@ -2,7 +2,7 @@ github.com/Siroshun09/logs v1.3.0 h1:71FMo2Ii0PdW+iRx3GQRm4NbAdCEtLMbfgwFrItCk+c
 github.com/Siroshun09/logs v1.3.0/go.mod h1:2mxzbq6msFav/c6WakiCTY+bGIwMMXKb5eyMxc9fQYg=
 github.com/Siroshun09/logs/logmock v1.0.0 h1:rvqaMrw8o9aNHWcqCrrMEnkRT0SJ6kpCbo3JfYTlSZ0=
 github.com/Siroshun09/logs/logmock v1.0.0/go.mod h1:eoAecP2NHVB89pg9zIPn2PvMW/iTRmy7MVI5WsMeGuU=
-github.com/Siroshun09/serrors v1.4.0 h1:YhQGvqAZI6f8Xr27Ddwwdxn3GVHBrd1j03ziAq6WZfU=
-github.com/Siroshun09/serrors v1.4.0/go.mod h1:+7CbxH0gjS9Ly2eqOir9lLe1a0SU0u85MPNC5r0WVho=
+github.com/Siroshun09/serrors v1.4.1 h1:2ZYHtE6eXGdz4/CfPX/iCVxCXDxGt0T417ba60pFBGE=
+github.com/Siroshun09/serrors v1.4.1/go.mod h1:+7CbxH0gjS9Ly2eqOir9lLe1a0SU0u85MPNC5r0WVho=
 go.uber.org/mock v0.6.0 h1:hyF9dfmbgIX5EfOdasqLsWD6xqpNZlXblLB/Dbnwv3Y=
 go.uber.org/mock v0.6.0/go.mod h1:KiVJ4BqZJaMj4svdfmHM0AUx4NJYO8ZNpPnZn1Z+BBU=
