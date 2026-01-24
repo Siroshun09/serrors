@@ -1,7 +1,7 @@
 # serrors
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Siroshun09/serrors)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Siroshun09/serrors/ci.yml?branch=main)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Siroshun09/serrors/ci.yml?branch=v2/main)
 ![GitHub](https://img.shields.io/github/license/Siroshun09/serrors)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Siroshun09/serrors)
 
@@ -14,7 +14,7 @@ A Go library to create errors with stack traces.
 ## Installation
 
 ```shell
-go get github.com/Siroshun09/serrors
+go get github.com/Siroshun09/serrors/v2
 ```
 
 ## Usage
@@ -46,14 +46,14 @@ import (
     "errors"
     "fmt"
 
-    "github.com/Siroshun09/serrors"
+    "github.com/Siroshun09/serrors/v2"
 )
 
 func main() {
     base := errors.New("base error")
 
     // Wrap with stack trace
-    err := serrors.WithStackTrace(base)
+    err := serrors.Wrap(base)
 
     // Retrieve the attached stack trace
     st, ok := serrors.GetAttachedStackTrace(err)
@@ -76,4 +76,4 @@ func main() {
 
 This project is under the Apache License version 2.0. Please see LICENSE for more info.
 
-Copyright © 2024-2025, Siroshun09
+Copyright © 2024-2026, Siroshun09
