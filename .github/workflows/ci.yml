@@ -14,15 +14,3 @@ jobs:
     with:
       upload-results: true
       go-version: 1.25
-  test-1_24-errorlogs:
-    uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
-    with:
-      working-dir: './errorlogs'
-      upload-results: true
-      go-version: 1.24
-  test-1_25-errorlogs:
-    uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
-    with:
-      working-dir: './errorlogs'
-      upload-results: true
-      go-version: 1.25
