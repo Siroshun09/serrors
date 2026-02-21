@@ -26,3 +26,14 @@ func Wrap(err error, attrs ...slog.Attr) error {
 	}
 	return withAttrs(sterr, attrs)
 }
+
+// WithMsg wraps an error with a message, StackTrace and slog.Attr.
+func WithMsg(err error, msg string, attrs ...slog.Attr) error {
+	joined := errors.Join(errors.New(msg), err)
+
+	sterr := withStackTrace(joined, 1)
+	if len(attrs) == 0 {
+		return sterr
+	}
+	return withAttrs(sterr, attrs)
+}
