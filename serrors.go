@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-// New creates an error with a StackTrace.
+// New creates an error with a StackTrace and slog.Attr.
 func New(msg string, attrs ...slog.Attr) error {
 	sterr := withStackTrace(errors.New(msg), 1)
 	if len(attrs) == 0 {
@@ -14,6 +14,7 @@ func New(msg string, attrs ...slog.Attr) error {
 	return withAttrs(sterr, attrs)
 }
 
+// Wrap wraps an error with a StackTrace and slog.Attr.
 func Wrap(err error, attrs ...slog.Attr) error {
 	if err == nil {
 		return nil
