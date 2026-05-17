@@ -564,7 +564,7 @@ func TestGetStackTraces(t *testing.T) {
 		{
 			name:            "wrap nil error",
 			err:             fmt.Errorf("%w", error(nil)),
-			wantErrs:        []error{},
+			wantErrs:        nil,
 			wantStackTraces: nil,
 		},
 		{
