@@ -9,7 +9,7 @@ func unwrapAll[E interface{ Unwrap() error }](err error, unwrapSelf bool, yield 
 
 	*count++
 	if maxUnwrapCount < *count {
-		return true
+		return false
 	}
 
 	switch e := err.(type) {
