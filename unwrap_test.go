@@ -168,7 +168,7 @@ func TestUnwrapAll(t *testing.T) {
 		})
 	}
 
-	t.Run("too many wrapped error stops at maxUnwrapDepth", func(t *testing.T) {
+	t.Run("too many wrapped error stops at maxUnwrapCount", func(t *testing.T) {
 		var err error = &mockE{msg: "base"}
 		for i := 0; i < 300; i++ {
 			err = &mockE{msg: fmt.Sprintf("level%d", i), err: err}

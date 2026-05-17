@@ -1,14 +1,14 @@
 package serrors
 
-const maxUnwrapDepth = 256
+const maxUnwrapCount = 256
 
-func unwrapAll[E interface{ Unwrap() error }](err error, unwrapSelf bool, yield func(E) bool, depth *int) bool {
-	if depth == nil {
-		depth = new(int)
+func unwrapAll[E interface{ Unwrap() error }](err error, unwrapSelf bool, yield func(E) bool, count *int) bool {
+	if count == nil {
+		count = new(int)
 	}
 
-	*depth++
-	if maxUnwrapDepth < *depth {
+	*count++
+	if maxUnwrapCount < *count {
 		return true
 	}
 
@@ -26,19 +26,19 @@ func unwrapAll[E interface{ Unwrap() error }](err error, unwrapSelf bool, yield 
 		if u == nil {
 			return true
 		}
-		return unwrapAll[E](u, unwrapSelf, yield, depth)
+		return unwrapAll[E](u, unwrapSelf, yield, count)
 	case interface{ Unwrap() error }:
 		u := e.Unwrap()
 		if u == nil {
 			return true
 		}
-		return unwrapAll[E](u, unwrapSelf, yield, depth)
+		return unwrapAll[E](u, unwrapSelf, yield, count)
 	case interface{ Unwrap() []error }:
 		for _, u := range e.Unwrap() {
 			if u == nil {
 				continue
 			}
-			if !unwrapAll[E](u, unwrapSelf, yield, depth) {
+			if !unwrapAll[E](u, unwrapSelf, yield, count) {
 				return false
 			}
 		}
