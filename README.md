@@ -1,11 +1,11 @@
 # serrors
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Siroshun09/serrors)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Siroshun09/serrors/ci.yml?branch=main)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Siroshun09/serrors/ci.yml?branch=v2/main)
 ![GitHub](https://img.shields.io/github/license/Siroshun09/serrors)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Siroshun09/serrors)
 
-A Go library to create errors with stack traces.
+A Go library to create errors with stack traces and structured attributes.
 
 ## Requirements
 
@@ -14,30 +14,78 @@ A Go library to create errors with stack traces.
 ## Installation
 
 ```shell
-go get github.com/Siroshun09/serrors
+go get github.com/Siroshun09/serrors/v2
 ```
 
 ## Usage
 
 ### Creating errors
 
-- With message: `serrors.New("msg")`
-- With format and args: `serrors.Errorf("msg: %s", "hello")`
-- Wrap an existing error: `serrors.WithStackTrace(err)`
-  - If `err` is `nil`, it returns `nil`.
-  - If `err` already has a stack trace from this package, it returns `err` as-is.
+```go
+// Create a new error with a stack trace
+err := serrors.New("something went wrong")
+
+// Create a new error with attributes
+err := serrors.New("something went wrong", slog.String("key", "value"))
+
+// Wrap an existing error with a stack trace
+err := serrors.Wrap(err)
+
+// Wrap with additional attributes
+err := serrors.Wrap(err, slog.Int("code", 42))
+```
+
+- `New` and `Wrap` always attach a stack trace.
+- If the error already has a stack trace from this package, `Wrap` reuses it instead of adding a new one.
+- `Wrap(nil)` returns `nil`.
 
 ### Getting stack traces
 
-- `serrors.GetStackTrace(err)` returns a stack trace for `err`.
-  - If `err` already has a stack trace attached (created by this package), it returns that.
-  - Otherwise, it returns the current call site's stack trace.
-  - If `err` is `nil`, it returns `nil`.
-- `serrors.GetAttachedStackTrace(err)` returns the attached stack trace and a bool.
-  - The bool indicates whether `err` had an attached stack trace.
-- `serrors.GetCurrentStackTrace()` returns the current StackTrace. 
+```go
+// Get the attached stack trace (returns false if none is attached)
+st, ok := serrors.GetAttachedStackTrace(err)
 
-### Example
+// Get the attached stack trace, or the current call site's stack trace if none is attached
+st := serrors.GetStackTrace(err)
+
+// Get the current call site's stack trace
+st := serrors.GetCurrentStackTrace()
+
+// Iterate over all stack traces in an error chain (useful with errors.Join)
+for err, st := range serrors.GetStackTraces(err) {
+    fmt.Println(err, st)
+}
+```
+
+### Getting attributes
+
+```go
+// Iterate over all slog.Attr values attached to an error chain
+for err, attr := range serrors.GetAttrs(err) {
+    fmt.Println(err, attr)
+}
+```
+
+### StackTrace and Frame
+
+`StackTrace` is a `[]Frame`, where each `Frame` holds the function name, file, and line number.
+
+```go
+st := serrors.GetCurrentStackTrace()
+fmt.Println(st.String()) // prints all frames, one per line
+
+for _, frame := range st {
+    fmt.Println(frame.String()) // "pkg.FuncName (file.go:42)"
+}
+```
+
+Both `Frame` and `StackTrace` implement `encoding.TextAppender` via `AppendText([]byte) ([]byte, error)`.
+
+### Interoperability
+
+Errors created by this package implement `Unwrap() error`, so they work with `errors.Is`, `errors.As`, and `fmt.Errorf("%w", ...)` as usual.
+
+## Example
 
 ```go
 package main
@@ -45,35 +93,32 @@ package main
 import (
     "errors"
     "fmt"
+    "log/slog"
 
-    "github.com/Siroshun09/serrors"
+    "github.com/Siroshun09/serrors/v2"
 )
 
 func main() {
     base := errors.New("base error")
 
-    // Wrap with stack trace
-    err := serrors.WithStackTrace(base)
+    // Wrap with a stack trace and an attribute
+    err := serrors.Wrap(base, slog.String("user", "alice"))
 
     // Retrieve the attached stack trace
-    st, ok := serrors.GetAttachedStackTrace(err)
-    if ok {
-        fmt.Println("stack trace attached:")
+    if st, ok := serrors.GetAttachedStackTrace(err); ok {
+        fmt.Println("stack trace:")
         fmt.Println(st.String())
     }
 
-    // Or always get a stack trace (attached or current)
-    fmt.Println(serrors.GetStackTrace(err))
+    // Iterate over attributes in the error chain
+    for e, attr := range serrors.GetAttrs(err) {
+        fmt.Printf("error=%v attr=%v\n", e, attr)
+    }
 }
 ```
-
-### Interoperability
-
-- The wrapped error implements `Unwrap() error`, so it works with `errors.Is` and `errors.As`.
-- `fmt.Errorf("...: %w", err)` can be used in combination with these errors as usual.
 
 ## License
 
 This project is under the Apache License version 2.0. Please see LICENSE for more info.
 
-Copyright © 2024-2025, Siroshun09
+Copyright © 2024-2026, Siroshun09

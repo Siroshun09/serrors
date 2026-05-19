@@ -1,4 +1,4 @@
-name: Go Build
+name: Go Test
 on: [ push, pull_request ]
 permissions:
   checks: write
@@ -14,15 +14,8 @@ jobs:
     with:
       upload-results: true
       go-version: 1.25
-  test-1_24-errorlogs:
+  test-1_26:
     uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
     with:
-      working-dir: './errorlogs'
       upload-results: true
-      go-version: 1.24
-  test-1_25-errorlogs:
-    uses: Siroshun09/gh-actions-workflows/.github/workflows/go-test.yml@v1
-    with:
-      working-dir: './errorlogs'
-      upload-results: true
-      go-version: 1.25
+      go-version: 1.26
